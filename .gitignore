@@ -39,4 +39,6 @@ bin/
 .vscode/
 
 ### Mac OS ###
-.DS_Storeliquibase.log
+.DS_Store
+liquibase.log
+liquibase.log
