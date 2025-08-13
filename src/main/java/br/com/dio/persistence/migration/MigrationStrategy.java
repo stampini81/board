@@ -10,40 +10,42 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.sql.Connection;
-import java.sql.SQLException;
-
-import static br.com.dio.persistence.config.ConnectionConfig.getConnection;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 @AllArgsConstructor
 public class MigrationStrategy {
 
+    private static final Logger LOGGER = Logger.getLogger(MigrationStrategy.class.getName());
+
     private final Connection connection;
 
+    @SuppressWarnings("java:S106")
     public void executeMigration(){
         var originalOut = System.out;
         var originalErr = System.err;
         try(var fos = new FileOutputStream("liquibase.log")){
             System.setOut(new PrintStream(fos));
             System.setErr(new PrintStream(fos));
-            try(
-                    var connection = getConnection();
-                    var jdbcConnection = new JdbcConnection(connection);
-            ){
-                var liquibase = new Liquibase(
-                        "/db/changelog/db.changelog-master.yml",
-                        new ClassLoaderResourceAccessor(),
-                        jdbcConnection);
-                liquibase.update();
-            } catch (SQLException | LiquibaseException e) {
-                e.printStackTrace();
-                System.setErr(originalErr);
-            }
+            runLiquibaseMigration();
         } catch (IOException ex){
-            ex.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Error writing Liquibase log file", ex);
         } finally {
             System.setOut(originalOut);
             System.setErr(originalErr);
         }
     }
 
+    private void runLiquibaseMigration() {
+        try {
+            var jdbcConnection = new JdbcConnection(this.connection);
+            var liquibase = new Liquibase(
+                    "/db/changelog/db.changelog-master.yml",
+                    new ClassLoaderResourceAccessor(),
+                    jdbcConnection);
+            liquibase.update();
+        } catch (LiquibaseException e) {
+            LOGGER.log(Level.SEVERE, "Liquibase migration failed", e);
+        }
+    }
 }

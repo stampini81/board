@@ -1,5 +1,6 @@
 plugins {
     id("java")
+    id("application")
 }
 
 group = "br.com.dio"
@@ -15,6 +16,21 @@ dependencies {
     implementation("org.projectlombok:lombok:1.18.34")
 
     annotationProcessor("org.projectlombok:lombok:1.18.34")
+}
+
+application {
+    mainClass.set("br.com.dio.Main")
+}
+
+java {
+    toolchain {
+        languageVersion.set(org.gradle.jvm.toolchain.JavaLanguageVersion.of(17))
+    }
+}
+
+// Ensure interactive input works when using `gradlew run`
+tasks.named<JavaExec>("run") {
+    standardInput = System.`in`
 }
 
 tasks.test {
